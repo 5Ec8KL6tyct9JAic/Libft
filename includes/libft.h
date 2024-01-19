@@ -3,20 +3,25 @@
 /*                                                        :::      ::::::::   */
 /*   libft.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dvalerio <dvalerio@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dvalerio <dvalerio@42lausanne.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/10 16:26:05 by dvalerio          #+#    #+#             */
-/*   Updated: 2023/12/08 15:14:50 by dvalerio         ###   ########.fr       */
+/*   Updated: 2024/01/19 12:51:33 by dvalerio         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef LIBFT_H
 # define LIBFT_H
 
+# include <stdio.h>
+# include <stddef.h>
+# include <string.h>
+# include <ctype.h>
 # include <stdlib.h>
 # include <unistd.h>
 # include <stdarg.h>
-# include <stdio.h>
+# include <limits.h>
+# include <fcntl.h>
 
 //buffer size of GNL
 # define BUFFER_SIZE 1000

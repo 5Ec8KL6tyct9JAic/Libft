@@ -3,119 +3,103 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dvalerio <marvin@42lausanne.ch>            +#+  +:+       +#+        */
+/*   By: dvalerio <dvalerio@42lausanne.ch>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/06 15:05:45 by dvalerio          #+#    #+#             */
-/*   Updated: 2023/04/21 12:07:05 by dvalerio         ###   ########.fr       */
+/*   Updated: 2024/01/19 12:51:57 by dvalerio         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../includes/libft.h"
 
-// STRJOIN ET FREE DU BUFFER
-char	*ft_free(char *buffer, char *buf)
-{
-	char	*temp;
-
-	temp = ft_strjoin(buffer, buf);
-	if (!temp)
-		return (NULL);
-	free(buffer);
-	buffer = NULL;
-	return (temp);
-}
-// SUPP LA DERNIERE LIGNE TROUVÉE
-
-char	*ft_next(char *buffer)
-{
-	int		i;
-	int		j;
-	char	*line;
-
-	i = 0;
-	while (buffer[i] && buffer[i] != '\n')
-		i++;
-	if (!buffer[i])
-	{
-		free(buffer);
-		return (NULL);
-	}
-	line = ft_calloc((ft_strlen(buffer) - i + 1), sizeof(char));
-	if (!line)
-		return (NULL);
-	i++;
-	j = 0;
-	while (buffer[i])
-		line[j++] = buffer[i++];
-	free(buffer);
-	return (line);
-}
-
-char	*ft_line(char *buffer)
-{
-	char	*line;
-	int		i;
-
-	i = 0;
-	if (!buffer[i])
-		return (NULL);
-	while (buffer[i] != '\n' && buffer[i])
-		i++;
-	line = ft_calloc(i + 1, sizeof(char));
-	if (!line)
-		return (NULL);
-	i = 0;
-	while (buffer[i] && buffer[i] != '\n')
-	{
-		line[i] = buffer[i];
-		i++;
-	}
-	if (buffer[i] && buffer[i] == '\n')
-		line[i++] = '\n';
-	return (line);
-}
-
-// LEC FICHIER JUSQA TROUVER UNE LIGNE
-char	*read_file(int fd, char *res)
-{
-	char	*buffer;
-	int		byte_read;
-
-	if (!res)
-		res = ft_calloc(1, 1);
-	buffer = ft_calloc(BUFFER_SIZE + 1, sizeof(char));
-	if (!buffer)
-		return (NULL);
-	byte_read = 1;
-	while (byte_read > 0)
-	{
-		byte_read = read(fd, buffer, BUFFER_SIZE);
-		if (byte_read == -1)
-		{
-			free(res);
-			free(buffer);
-			return (NULL);
-		}
-		buffer[byte_read] = '\0';
-		res = ft_free(res, buffer);
-		if (ft_strchr(buffer, '\n'))
-			break ;
-	}
-	free(buffer);
-	return (res);
-}
+int		ft_get_line_break(int fd, char **stash);
+char	*ft_get_line(char **stash);
+void	ft_free(char **p);
 
 char	*get_next_line(int fd)
 {
-	static char	*buffer;
-	char		*res;
+	static char	*stash;
+	char		*line;
+	int			read_bytes;
 
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
-	buffer = read_file(fd, buffer);
-	if (buffer == NULL)
+	if (!stash)
+		stash = ft_strdup("");
+	if (!stash)
 		return (NULL);
-	res = ft_line(buffer);
-	buffer = ft_next(buffer);
-	return (res);
+	read_bytes = ft_get_line_break(fd, &stash);
+	if ((read_bytes == -1) || (read_bytes == 0 && !ft_strlen(stash)))
+	{
+		ft_free(&stash);
+		return (NULL);
+	}
+	line = ft_get_line(&stash);
+	if (!line)
+	{
+		ft_free(&stash);
+		return (NULL);
+	}
+	return (line);
+}
+
+// Until a '\n' is found in stash, read and then append buff on stash
+int	ft_get_line_break(int fd, char **stash)
+{
+	char	*buff;
+	char	*temp;
+	ssize_t	read_bytes;
+
+	read_bytes = 1;
+	buff = (char *)malloc(sizeof(char) * (BUFFER_SIZE + 1));
+	if (!buff)
+		return (-1);
+	while (!ft_strchr(*stash, '\n'))
+	{
+		read_bytes = read(fd, buff, BUFFER_SIZE);
+		if (read_bytes == -1 || read_bytes == 0)
+			break ;
+		buff[read_bytes] = '\0';
+		temp = ft_strjoin(*stash, buff);
+		if (!temp)
+		{
+			read_bytes = -1;
+			break ;
+		}
+		free(*stash);
+		*stash = temp;
+	}
+	free(buff);
+	return ((int)read_bytes);
+}
+
+// Manipulating stash to get the line
+// And delete the line part from it and getting checkpoint
+char	*ft_get_line(char **stash)
+{
+	char	*line;
+	char	*temp;
+	int		i;
+
+	i = 0;
+	while ((*stash)[i] != '\n' && (*stash)[i])
+		i++;
+	line = ft_substr(*stash, 0, i + 1);
+	if (!line)
+		return (NULL);
+	temp = ft_substr(*stash, i + 1, ft_strlen(*stash) - i + 1);
+	if (!temp)
+	{
+		ft_free(&line);
+		return (NULL);
+	}
+	free(*stash);
+	*stash = temp;
+	return (line);
+}
+
+void	ft_free(char **p)
+{
+	free(*p);
+	*p = NULL;
 }
